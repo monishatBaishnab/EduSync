@@ -198,6 +198,37 @@ const mongodbRun = async () => {
             }
         });
 
+        //Define API for update a specific assignments
+        // case 1: http://localhost:5000/api/v1/assignments/65466adbab69dc9d9cc25c34?email=baishnabmonishat@gmail.com
+        app.put('/api/v1/assignments/:id', verifyAuth, async (req, res) => {
+            try {
+                const assignmentId = req.params.id;
+                const email = req.query.email;
+                const user = req.user;
+                const assignment = req.body;
+
+                const updatedAssignment = {
+                    $set: {
+                        ...assignment
+                    }
+                }
+                const filter = { _id: new ObjectId(assignmentId) };
+                const options = { upsert: true }
+
+                if (user.email === email) {
+                    const result = await assignmentCollection.updateOne(filter, updatedAssignment, options);
+                    res.send(result);
+                } else {
+                    res.status(500).json({ error: "An error occurred" });
+                }
+
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).json({ error: "An error occurred" });
+            }
+        });
+
+        
 
         // Check the connection to MongoDB by sending a ping request
         await client.db('admin').command({ ping: 1 });
