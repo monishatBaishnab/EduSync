@@ -173,6 +173,31 @@ const mongodbRun = async () => {
             }
         })
 
+        //Define API for delete a specific assignments
+        // case 1: http://localhost:5000/api/v1/assignments/65467c24b85959ce7950c5dc?email=baishnabmonishat@gmail.com
+        app.delete('/api/v1/assignments/:id', verifyAuth, async (req, res) => {
+            try {
+                const assignmentId = req.params.id;
+                const email = req.query.email;
+                const user = req.user;
+                const assignmentEmail = req.query.assignmentEmail;
+
+                if (user.email === email) {
+                    if (user.email == assignmentEmail) {
+                        const result = await assignmentCollection.deleteOne({ _id: new ObjectId(assignmentId) });
+                        res.send(result);
+                    }else{
+                        res.status(500).json({ error: "An error occurred1" });
+                    }
+                } else {
+                    res.status(500).json({ error: "An error occurred2" });
+                }
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).json({ error: "An error occurred3" });
+            }
+        });
+
 
         // Check the connection to MongoDB by sending a ping request
         await client.db('admin').command({ ping: 1 });
