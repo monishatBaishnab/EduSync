@@ -17,6 +17,26 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+const verifyAuth = (req, res, next) => {
+    // Retrieve the token from the request cookies
+    const token = req.cookies.token;
+
+    if (!token) {
+        return res.status(401).json({ error: 'Unauthorized access' });
+    }
+
+    // Verify the token using the SECRET_KEY
+    jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+        if (err) {
+            // If there's an error during token verification, send an unauthorized response
+            res.status(401).json({ error: 'Unauthorized access' });
+        } else {
+            // If the token is valid, set the user information in the request object and proceed to the next middleware
+            req.user = decoded;
+            next();
+        }
+    });
+};
 
 // MongoDB URI for connecting to the database
 const uri = "mongodb://localhost:27017";
@@ -102,6 +122,26 @@ const mongodbRun = async () => {
                 res.status(500).json({ error: "An error occurred" });
             }
         })
+
+        //Define API for get a specific assingment
+        // case 1: http://localhost:5000/api/v1/assignments/65466adbab69dc9d9cc25c2f?email=baishnabmonishat@gmail.com
+        app.get('/api/v1/assignments/:id', verifyAuth, async(req, res) => {
+            try {
+                const user = req.user;
+                const email = req.query.email;
+                const assignmentId = req.params.id;
+
+                if(user.email === email){
+                    const result = await assignmentCollection.findOne({_id: new ObjectId(assignmentId)});
+                    res.send(result);
+                }
+                else{
+                    res.status(500).json({error: "An error occurred"});
+                }
+            } catch (error) {
+                res.status(500).json({ error: "An error occurred" });
+            }
+        });
         
 
         // Check the connection to MongoDB by sending a ping request
@@ -113,6 +153,7 @@ const mongodbRun = async () => {
     }
 }
 
+mongodbRun();
 
 // Start the Express server and listen on the defined port
 app.listen(port, () => console.log("Server Running..."));
