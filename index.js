@@ -40,6 +40,17 @@ const mongodbRun = async () => {
         // Access the 'services' collection within the 'emaJohnDB' database
         const assignmentCollection = client.db('EduSync').collection('assignments');
 
+        //Define API routes for genarate token
+        app.post('/api/v1/token', (req, res) => {
+            try {
+                const user = req.body;
+                const token = jwt.sign(user, process.env.SECRET_KEY, { expiresIn: '1h' });
+                res.cookie('token', token, { httpOnly: true, secure: false, sameSite: 'none' }).send({ message: 'Success' });
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).json({ error: "An error occurred" });
+            }
+        })
         
 
         // Check the connection to MongoDB by sending a ping request
