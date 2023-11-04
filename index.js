@@ -51,6 +51,57 @@ const mongodbRun = async () => {
                 res.status(500).json({ error: "An error occurred" });
             }
         })
+
+        //Define API for get all assignments
+        // this api use many cases
+        // case 1: http://localhost:5000/api/v1/assignments
+        // case 2: http://localhost:5000/api/v1/assignments?difficulty=medium
+        // case 3: http://localhost:5000/api/v1/assignments?difficulty=medium&sort=marks&sortOrder=desc
+        // case 4: http://localhost:5000/api/v1/assignments?page=2&offset=5
+
+        app.get('/api/v1/assignments', async (req, res) => {
+            try {
+                // Initialize objects for filtering and sorting
+                const filterObj = {};
+                const sortObj = {};
+
+                // Retrieve query parameters from the request
+                const difficulty = req.query.difficulty;
+                const sort = req.query.sort;
+                const sortOrder = req.query.sortOrder;
+                const offset = parseInt(req.query.offset);
+                const page = parseInt(req.query.page);
+
+                // If sorting parameters are provided, add them to the sortObj
+                if (sort && sortOrder) {
+                    sortObj[sort] = sortOrder;
+                }
+
+                // If a difficulty parameter is provided, add it to the difficultyObj
+                if (difficulty) {
+                    filterObj.difficulty = difficulty;
+                }
+
+                const count = await assignmentCollection.estimatedDocumentCount();
+
+                if (offset && page) {
+                    // Query the assignmentCollection with the filter and sorting options
+                    const result = await assignmentCollection.find(filterObj).sort(sortObj).limit(offset).skip((page - 1) * offset).toArray();
+                    // Send the results as a response
+                    res.send({ count, assignments: result });
+                }
+                else {
+                    // Query the assignmentCollection with the filter and sorting options
+                    const result = await assignmentCollection.find(filterObj).sort(sortObj).toArray();
+                    // Send the results as a response
+                    res.send({ count, assignments: result });
+                }
+
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).json({ error: "An error occurred" });
+            }
+        })
         
 
         // Check the connection to MongoDB by sending a ping request
