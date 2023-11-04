@@ -125,24 +125,54 @@ const mongodbRun = async () => {
 
         //Define API for get a specific assingment
         // case 1: http://localhost:5000/api/v1/assignments/65466adbab69dc9d9cc25c2f?email=baishnabmonishat@gmail.com
-        app.get('/api/v1/assignments/:id', verifyAuth, async(req, res) => {
+        app.get('/api/v1/assignments/:id', verifyAuth, async (req, res) => {
             try {
                 const user = req.user;
                 const email = req.query.email;
                 const assignmentId = req.params.id;
 
-                if(user.email === email){
-                    const result = await assignmentCollection.findOne({_id: new ObjectId(assignmentId)});
+                if (user.email === email) {
+                    const result = await assignmentCollection.findOne({ _id: new ObjectId(assignmentId) });
                     res.send(result);
                 }
-                else{
-                    res.status(500).json({error: "An error occurred"});
+                else {
+                    res.status(500).json({ error: "An error occurred" });
                 }
             } catch (error) {
                 res.status(500).json({ error: "An error occurred" });
             }
         });
-        
+
+        //Define API for post a new assignment
+        // case 1: http://localhost:5000/api/v1/assignments
+        // assignment: {
+        //     "title": "Assignment 8",
+        //     "description": "Write a report on a current topic in computer science.",
+        //     "marks": 10,
+        //     "thumbnailImageURL": "https://example.com/assignment8_thumbnail.jpg",
+        //     "difficulty": "easy",
+        //     "dueDate": "2024-01-15"
+        //     "user": {
+        //         "email": "baishnabmonishat@gmail.com"
+        //     }
+        // }
+        app.post('/api/v1/assignments', verifyAuth, async (req, res) => {
+            try {
+                const email = req.query.email;
+                const user = req.user;
+                const assignment = req.body;
+                if (user.email === email) {
+                    const result = await assignmentCollection.insertOne(assignment);
+                    res.send(result);
+                } else {
+                    res.status(500).json({ error: "An error occurred" });
+                }
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).json({ error: "An error occurred" });
+            }
+        })
+
 
         // Check the connection to MongoDB by sending a ping request
         await client.db('admin').command({ ping: 1 });
