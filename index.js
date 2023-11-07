@@ -12,6 +12,7 @@ const port = process.env.PORT || 5000;
 
 // Middleware setup
 app.use(cors({
+    origin: ['http://localhost:5173'],
     credentials: true
 }));
 app.use(express.json());
@@ -22,14 +23,14 @@ const verifyAuth = (req, res, next) => {
     const token = req.cookies.token;
 
     if (!token) {
-        return res.status(401).json({ error: 'Unauthorized access' });
+        return res.status(401).json({ error: 'Unauthorized access.' });
     }
 
     // Verify the token using the SECRET_KEY
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
         if (err) {
             // If there's an error during token verification, send an unauthorized response
-            res.status(401).json({ error: 'Unauthorized access' });
+            res.status(401).json({ error: 'Unauthorized access.' });
         } else {
             // If the token is valid, set the user information in the request object and proceed to the next middleware
             req.user = decoded;
@@ -65,17 +66,21 @@ const mongodbRun = async () => {
             try {
                 const user = req.body;
                 const token = jwt.sign(user, process.env.SECRET_KEY, { expiresIn: '1h' });
-                res.cookie('token', token, { httpOnly: true, secure: false, sameSite: 'none' }).send({ message: 'Success' });
+                res.cookie('token', token, { httpOnly: true, secure: false }).send({ message: 'Cookie Stored.' });
             } catch (error) {
                 console.log(error.message);
                 res.status(500).json({ error: "An error occurred" });
             }
         })
 
+        app.post('/api/v1/logout/', (req, res) => {
+            res.clearCookie('token', { maxAge: 0 }).send({ message: 'Cookie Cleared.' })
+        })
+
         //Define API for get all assignments
         // this api use many cases
         // case 1: http://localhost:5000/api/v1/assignments
-        // case 2: http://localhost:5000/api/v1/assignments?difficulty=medium
+        // case 2: http://localhost:5000/api/v1/assignments?level=medium
         // case 3: http://localhost:5000/api/v1/assignments?difficulty=medium&sort=marks&sortOrder=desc
         // case 4: http://localhost:5000/api/v1/assignments?page=2&offset=5
 
@@ -86,20 +91,24 @@ const mongodbRun = async () => {
                 const sortObj = {};
 
                 // Retrieve query parameters from the request
-                const difficulty = req.query.difficulty;
+                const level = req.query.level;
                 const sort = req.query.sort;
                 const sortOrder = req.query.sortOrder;
                 const offset = parseInt(req.query.offset);
                 const page = parseInt(req.query.page);
-
+                const email = req.query.email;
+                
                 // If sorting parameters are provided, add them to the sortObj
                 if (sort && sortOrder) {
                     sortObj[sort] = sortOrder;
                 }
 
-                // If a difficulty parameter is provided, add it to the difficultyObj
-                if (difficulty) {
-                    filterObj.difficulty = difficulty;
+                // If a level parameter is provided, add it to the levelObj
+                if (email) {
+                    filterObj.user = { email };
+                }
+                if (level) {
+                    filterObj.level = level;
                 }
 
                 const count = await assignmentCollection.estimatedDocumentCount();
@@ -145,13 +154,13 @@ const mongodbRun = async () => {
 
         //Define API for post a new assignment
         // case 1: http://localhost:5000/api/v1/assignments
-        // assignment: {
-        //     "title": "Assignment 8",
-        //     "description": "Write a report on a current topic in computer science.",
-        //     "marks": 10,
-        //     "thumbnailImageURL": "https://example.com/assignment8_thumbnail.jpg",
-        //     "difficulty": "easy",
-        //     "dueDate": "2024-01-15"
+        //assignment: {
+        //     "title": "Updated Assignment!",
+        //     "description": "Implement a binary search algorithm in C++.",
+        //     "marks": 12,
+        //     "thumbnailImageURL": "https://example.com/assignment7_thumbnail.jpg",
+        //     "difficulty": "medium",
+        //     "dueDate": "2024-03-01",
         //     "user": {
         //         "email": "baishnabmonishat@gmail.com"
         //     }
@@ -165,13 +174,14 @@ const mongodbRun = async () => {
                     const result = await assignmentCollection.insertOne(assignment);
                     res.send(result);
                 } else {
-                    res.status(500).json({ error: "An error occurred" });
+                    res.status(500).json({ error: "An error occurred." });
                 }
             } catch (error) {
                 console.log(error.message);
                 res.status(500).json({ error: "An error occurred" });
             }
         })
+
 
         //Define API for delete a specific assignments
         // case 1: http://localhost:5000/api/v1/assignments/65467c24b85959ce7950c5dc?email=baishnabmonishat@gmail.com
@@ -186,15 +196,15 @@ const mongodbRun = async () => {
                     if (user.email == assignmentEmail) {
                         const result = await assignmentCollection.deleteOne({ _id: new ObjectId(assignmentId) });
                         res.send(result);
-                    }else{
-                        res.status(500).json({ error: "An error occurred1" });
+                    } else {
+                        res.status(500).send({ error: "User mismatch error." });
                     }
                 } else {
-                    res.status(500).json({ error: "An error occurred2" });
+                    res.status(500).send({ error: "An error occurred" });
                 }
             } catch (error) {
                 console.log(error.message);
-                res.status(500).json({ error: "An error occurred3" });
+                res.status(500).send({ error: "An error occurred" });
             }
         });
 
@@ -205,8 +215,9 @@ const mongodbRun = async () => {
                 const assignmentId = req.params.id;
                 const email = req.query.email;
                 const user = req.user;
+                const assignmentEmail = req.query.assignmentEmail;
                 const assignment = req.body;
-
+                
                 const updatedAssignment = {
                     $set: {
                         ...assignment
@@ -216,10 +227,14 @@ const mongodbRun = async () => {
                 const options = { upsert: true }
 
                 if (user.email === email) {
-                    const result = await assignmentCollection.updateOne(filter, updatedAssignment, options);
-                    res.send(result);
+                    if(user.email === assignmentEmail){
+                        const result = await assignmentCollection.updateOne(filter, updatedAssignment, options);
+                        res.send(result);
+                    }else {
+                        res.status(500).send({ error: "User mismatch error." });
+                    }
                 } else {
-                    res.status(500).json({ error: "An error occurred" });
+                    res.status(500).send({ error: "An error occurred" });
                 }
 
             } catch (error) {
@@ -227,8 +242,6 @@ const mongodbRun = async () => {
                 res.status(500).json({ error: "An error occurred" });
             }
         });
-
-        
 
         // Check the connection to MongoDB by sending a ping request
         await client.db('admin').command({ ping: 1 });
@@ -239,6 +252,7 @@ const mongodbRun = async () => {
     }
 }
 
+// Execute the MongoDB interaction function
 mongodbRun();
 
 // Start the Express server and listen on the defined port
