@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 
 // Middleware setup
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: ['https://edusync-7a3f5.firebaseapp.com', 'https://edusync-7a3f5.web.app'],
     credentials: true
 }));
 app.use(express.json());
@@ -63,7 +63,7 @@ const mongodbRun = async () => {
         const submitedAssignmentCollection = client.db('EduSync').collection('submitedAssignments');
 
         app.get('/', (req, res) => {
-            res.send('Server Runninng...');
+            res.send('Server Running...');
         })
 
         //Define API routes for genarate token
@@ -71,7 +71,14 @@ const mongodbRun = async () => {
             try {
                 const user = req.body;
                 const token = jwt.sign(user, process.env.SECRET_KEY, { expiresIn: '1h' });
-                res.cookie('token', token, { httpOnly: true, secure: false }).send({ message: 'Cookie Stored.' });
+                res
+                    .cookie('token', token, {
+                        httpOnly: true,
+                        secure: true,
+                        sameSite: 'none',
+                        maxAge: 60 * 60 * 1000
+                    })
+                    .send({ message: 'Cookie Stored.' });
             } catch (error) {
                 console.log(error.message);
                 res.status(500).send({ error: "An error occurred" });
@@ -258,10 +265,10 @@ const mongodbRun = async () => {
                 const email = req.query.email;
                 const user = req.user;
 
-                if(status){
+                if (status) {
                     filterObj.status = status;
                 }
-                if(submiterEmail){
+                if (submiterEmail) {
                     filterObj.submitedUser = submiterEmail;
                 }
 
@@ -283,7 +290,7 @@ const mongodbRun = async () => {
                 const email = req.query.email;
                 const user = req.user;
                 if (user.email === email) {
-                    const result = await submitedAssignmentCollection.findOne({_id: new ObjectId(submitedId)});
+                    const result = await submitedAssignmentCollection.findOne({ _id: new ObjectId(submitedId) });
                     res.send(result);
                 } else {
                     res.status(500).send({ error: "An error occurred." });
@@ -311,7 +318,7 @@ const mongodbRun = async () => {
             }
         })
 
-        app.patch('/api/v1/submited/assignments/:id',verifyAuth, async (req, res) => {
+        app.patch('/api/v1/submited/assignments/:id', verifyAuth, async (req, res) => {
             try {
                 const assignmentId = req.params.id;
                 const email = req.query.email;
@@ -323,7 +330,7 @@ const mongodbRun = async () => {
                         ...body
                     }
                 }
-                
+
                 const filter = { _id: new ObjectId(assignmentId) };
                 if (user.email === email) {
                     const result = await submitedAssignmentCollection.updateOne(filter, updatedAssignment);
