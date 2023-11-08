@@ -23,14 +23,14 @@ const verifyAuth = (req, res, next) => {
     const token = req.cookies.token;
 
     if (!token) {
-        return res.status(401).json({ error: 'Unauthorized access.' });
+        return res.status(401).send({ error: 'Unauthorized access.' });
     }
 
     // Verify the token using the SECRET_KEY
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
         if (err) {
             // If there's an error during token verification, send an unauthorized response
-            res.status(401).json({ error: 'Unauthorized access.' });
+            res.status(401).send({ error: 'Unauthorized access.' });
         } else {
             // If the token is valid, set the user information in the request object and proceed to the next middleware
             req.user = decoded;
@@ -60,6 +60,7 @@ const mongodbRun = async () => {
 
         // Access the 'services' collection within the 'emaJohnDB' database
         const assignmentCollection = client.db('EduSync').collection('assignments');
+        const submitedAssignmentCollection = client.db('EduSync').collection('submitedAssignments');
 
         //Define API routes for genarate token
         app.post('/api/v1/token', (req, res) => {
@@ -69,7 +70,7 @@ const mongodbRun = async () => {
                 res.cookie('token', token, { httpOnly: true, secure: false }).send({ message: 'Cookie Stored.' });
             } catch (error) {
                 console.log(error.message);
-                res.status(500).json({ error: "An error occurred" });
+                res.status(500).send({ error: "An error occurred" });
             }
         })
 
@@ -97,7 +98,7 @@ const mongodbRun = async () => {
                 const offset = parseInt(req.query.offset);
                 const page = parseInt(req.query.page);
                 const email = req.query.email;
-                
+
                 // If sorting parameters are provided, add them to the sortObj
                 if (sort && sortOrder) {
                     sortObj[sort] = sortOrder;
@@ -128,7 +129,7 @@ const mongodbRun = async () => {
 
             } catch (error) {
                 console.log(error.message);
-                res.status(500).json({ error: "An error occurred" });
+                res.status(500).send({ error: "An error occurred" });
             }
         })
 
@@ -145,10 +146,10 @@ const mongodbRun = async () => {
                     res.send(result);
                 }
                 else {
-                    res.status(500).json({ error: "An error occurred" });
+                    res.status(500).send({ error: "An error occurred" });
                 }
             } catch (error) {
-                res.status(500).json({ error: "An error occurred" });
+                res.status(500).send({ error: "An error occurred" });
             }
         });
 
@@ -174,11 +175,11 @@ const mongodbRun = async () => {
                     const result = await assignmentCollection.insertOne(assignment);
                     res.send(result);
                 } else {
-                    res.status(500).json({ error: "An error occurred." });
+                    res.status(500).send({ error: "An error occurred." });
                 }
             } catch (error) {
                 console.log(error.message);
-                res.status(500).json({ error: "An error occurred" });
+                res.status(500).send({ error: "An error occurred" });
             }
         })
 
@@ -217,7 +218,7 @@ const mongodbRun = async () => {
                 const user = req.user;
                 const assignmentEmail = req.query.assignmentEmail;
                 const assignment = req.body;
-                
+
                 const updatedAssignment = {
                     $set: {
                         ...assignment
@@ -227,10 +228,10 @@ const mongodbRun = async () => {
                 const options = { upsert: true }
 
                 if (user.email === email) {
-                    if(user.email === assignmentEmail){
+                    if (user.email === assignmentEmail) {
                         const result = await assignmentCollection.updateOne(filter, updatedAssignment, options);
                         res.send(result);
-                    }else {
+                    } else {
                         res.status(500).send({ error: "User mismatch error." });
                     }
                 } else {
@@ -239,9 +240,71 @@ const mongodbRun = async () => {
 
             } catch (error) {
                 console.log(error.message);
-                res.status(500).json({ error: "An error occurred" });
+                res.status(500).send({ error: "An error occurred" });
             }
         });
+
+
+        app.get('/api/v1/submited/assignments', verifyAuth, async (req, res) => {
+            try {
+                const email = req.query.email;
+                const user = req.user;
+                if (user.email === email) {
+                    const result = await submitedAssignmentCollection.find().toArray();
+                    res.send(result);
+                } else {
+                    res.status(500).send({ error: "An error occurred." });
+                }
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).send({ error: "An error occurred" });
+            }
+        })
+
+        app.post('/api/v1/submited/assignments', verifyAuth, async (req, res) => {
+            try {
+                const email = req.query.email;
+                const user = req.user;
+                const assignment = req.body;
+                if (user.email === email) {
+                    const result = await submitedAssignmentCollection.insertOne(assignment);
+                    res.send(result);
+                } else {
+                    res.status(500).send({ error: "An error occurred." });
+                }
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).send({ error: "An error occurred" });
+            }
+        })
+
+        app.patch('/api/v1/submited/assignments/:id',verifyAuth, async (req, res) => {
+            try {
+                const assignmentId = req.params.id;
+                const email = req.query.email;
+                const user = req.user;
+                const istatus = req.body.status;
+
+                const updatedAssignment = {
+                    $set: {
+                        status: istatus
+                    }
+                }
+                
+                const filter = { _id: new ObjectId(assignmentId) };
+                if (user.email === email) {
+                    const result = await submitedAssignmentCollection.updateOne(filter, updatedAssignment);
+                    res.send(result);
+                } else {
+                    res.status(500).send({ error: "An error occurred" });
+                }
+
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).send({ error: "An error occurred" });
+            }
+        })
+
 
         // Check the connection to MongoDB by sending a ping request
         await client.db('admin').command({ ping: 1 });
