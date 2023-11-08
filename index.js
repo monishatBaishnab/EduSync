@@ -40,8 +40,8 @@ const verifyAuth = (req, res, next) => {
 };
 
 // MongoDB URI for connecting to the database
-const uri = "mongodb://localhost:27017";
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.viujuo0.mongodb.net/?retryWrites=true&w=majority`;
+// const uri = "mongodb://localhost:27017";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.viujuo0.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoDB client instance
 const client = new MongoClient(uri, {
@@ -61,6 +61,10 @@ const mongodbRun = async () => {
         // Access the 'services' collection within the 'emaJohnDB' database
         const assignmentCollection = client.db('EduSync').collection('assignments');
         const submitedAssignmentCollection = client.db('EduSync').collection('submitedAssignments');
+
+        app.get('/', (req, res) => {
+            res.send('Server Runninng...');
+        })
 
         //Define API routes for genarate token
         app.post('/api/v1/token', (req, res) => {
