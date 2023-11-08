@@ -247,10 +247,39 @@ const mongodbRun = async () => {
 
         app.get('/api/v1/submited/assignments', verifyAuth, async (req, res) => {
             try {
+                const filterObj = {};
+
+                const status = req.query.status;
+                const submiterEmail = req.query.submiterEmail;
+                const email = req.query.email;
+                const user = req.user;
+
+                if(status){
+                    filterObj.status = status;
+                }
+                if(submiterEmail){
+                    filterObj.submitedUser = submiterEmail;
+                }
+
+                if (user.email === email) {
+                    const result = await submitedAssignmentCollection.find(filterObj).toArray();
+                    res.send(result);
+                } else {
+                    res.status(500).send({ error: "An error occurred." });
+                }
+            } catch (error) {
+                console.log(error.message);
+                res.status(500).send({ error: "An error occurred" });
+            }
+        })
+
+        app.get('/api/v1/submited/assignments/:id', verifyAuth, async (req, res) => {
+            try {
+                const submitedId = req.params.id;
                 const email = req.query.email;
                 const user = req.user;
                 if (user.email === email) {
-                    const result = await submitedAssignmentCollection.find().toArray();
+                    const result = await submitedAssignmentCollection.findOne({_id: new ObjectId(submitedId)});
                     res.send(result);
                 } else {
                     res.status(500).send({ error: "An error occurred." });
@@ -283,11 +312,11 @@ const mongodbRun = async () => {
                 const assignmentId = req.params.id;
                 const email = req.query.email;
                 const user = req.user;
-                const istatus = req.body.status;
+                const body = req.body;
 
                 const updatedAssignment = {
                     $set: {
-                        status: istatus
+                        ...body
                     }
                 }
                 
