@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 
 // Middleware setup
 app.use(cors({
-    origin: ['https://edusync-7a3f5.firebaseapp.com', 'https://edusync-7a3f5.web.app', 'http://localhost:5173'],
+    origin: ['https://edusync-7a3f5.firebaseapp.com', 'https://edusync-7a3f5.web.app'],
     credentials: true
 }));
 app.use(express.json());
