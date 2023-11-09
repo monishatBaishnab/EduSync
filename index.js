@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 
 // Middleware setup
 app.use(cors({
-    origin: ['https://edusync-7a3f5.firebaseapp.com', 'https://edusync-7a3f5.web.app'],
+    origin: ['https://edusync-7a3f5.firebaseapp.com', 'https://edusync-7a3f5.web.app', 'http://localhost:5173'],
     credentials: true
 }));
 app.use(express.json());
@@ -86,7 +86,12 @@ const mongodbRun = async () => {
         })
 
         app.post('/api/v1/logout/', (req, res) => {
-            res.clearCookie('token', { maxAge: 0 }).send({ message: 'Cookie Cleared.' })
+            res.clearCookie('token', {
+                maxAge: 0,
+                secure: process.env.NODE_ENV === 'production' ? true : false,
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            })
+            .send({ message: 'Cookie Cleared.' })
         })
 
         //Define API for get all assignments
