@@ -1,9 +1,11 @@
 const express = require('express');
 
 const app = express();
-const applyMiddlewares = require('./middleware/app');
+const applyMiddlewares = require('./middleware');
 const pathErrorHanlder = require('./middleware/pathErrorHandler')
 const globalErrorHandler = require('./middleware/globalErrorHandler')
+
+// Apply all necessary middlwares to 'app' 
 applyMiddlewares(app);
 
 //Define a helth chek endpoint to check server status.
