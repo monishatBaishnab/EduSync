@@ -1,20 +1,12 @@
 const router = require('express').Router();
-const { findAll } = require('../../controllers/assignments');
-const Assignment = require('../../models/assignment');
+const { findAll, insertOne, updateOne, deleteOne } = require('../../controllers/assignments');
 
 router.get('/assignments', findAll);
 
-router.post('/assignments', async (req, res, next) => {
-    try {
-        // Create a new assignment using request body and save to database
-        const assignmentData = new Assignment(req.body);
-        const result = await assignmentData.save();
+router.post('/assignments', insertOne);
 
-        // Respond with the saved assignment data
-        res.json(result);
-    } catch (error) {
-        next(error);
-    }
-})
+router.put('/assignments/:id', updateOne);
+
+router.delete('/assignments/:id', deleteOne);
 
 module.exports = router;

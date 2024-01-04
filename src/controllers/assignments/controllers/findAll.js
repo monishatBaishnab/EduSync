@@ -1,3 +1,4 @@
+const Assignment = require('../../../models/assignment');
 const findAll = async (req, res, next) => {
     try {
         // Extract query parameters for sorting, pagination, and filtering
@@ -7,6 +8,14 @@ const findAll = async (req, res, next) => {
         const level = req.query.level;
 
         let pipeline = [];
+        let countPipeline = [];
+
+        // Aggregate assignments and retrieve count based on filtering
+        if (level) {
+            countPipeline.push({ $match: { level } });
+        }
+        countPipeline.push({ $group: { _id: null, count: { $sum: 1 } } });
+        const count = await Assignment.aggregate(countPipeline);
 
         // MongoDB aggregation pipeline for sorting and paginating assignments
         pipeline.push(
@@ -31,12 +40,6 @@ const findAll = async (req, res, next) => {
                 $match: { level }
             })
         }
-
-        // Aggregate assignments and retrieve count based on filtering
-        const count = await Assignment.aggregate([
-            { $match: { level } },
-            { $group: { _id: null, count: { $sum: 1 } } }
-        ]);
 
         // Respond with the paginated assignments and count
         const result = await Assignment.aggregate(pipeline);
