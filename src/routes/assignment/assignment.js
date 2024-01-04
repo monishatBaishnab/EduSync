@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { findAll, insertOne, updateOne, deleteOne } = require('../../controllers/assignments');
+const { findAll, insertOne, updateOne, deleteOne } = require('../../api/assignments');
 
 router.get('/assignments', findAll);
 

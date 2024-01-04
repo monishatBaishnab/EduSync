@@ -20,9 +20,23 @@ const findAll = async (req, res, next) => {
         // MongoDB aggregation pipeline for sorting and paginating assignments
         pipeline.push(
             {
-                $sort: { 'maxMark': sequence ? sequence : 1 }
+                $lookup: {
+                    from: 'users',
+                    localField: 'author',
+                    foreignField: '_id',
+                    as: 'author'
+                }
+            },
+            {
+                $unwind: "$author"
             }
         )
+
+        if (sequence) {
+            pipeline.push({
+                $sort: { 'maxMark': sequence }
+            })
+        }
 
         if (page && offset) {
             pipeline.push(
