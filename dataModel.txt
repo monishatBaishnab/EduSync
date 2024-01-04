@@ -1,0 +1,14 @@
+{
+    "name": "Mukta Baishnab",
+    "email": "mukta@baishnab.com",
+    "image": "https://i.ibb.co/J5YphPK/fb-prfile.jpg"
+}
+{
+    "title": "Research Paper on Climate Change",
+    "description": "Explore the impact of climate change on ecosystems and propose mitigation strategies.",
+    "thumbnail": "https://i.ibb.co/DYx9G5v/fabio-magalhaes-nm-Tm7kn-Unqs-unsplash-1.jpg",
+    "deadline": "2024-03-15",
+    "level": "heard",
+    "maxMark": 100,
+    "author": "6596d5a6c356d2050832b387"
+}

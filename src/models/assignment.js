@@ -22,11 +22,11 @@ const assignmentModel = new mongoose.Schema({
     required: true
   },
   maxMark: {
-    type: String,
+    type: Number,
     required: true
   },
   author: {
-    typeof: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }
 })
