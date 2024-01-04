@@ -1,15 +1,20 @@
-const cookieParser = require('cookie-parser');
 const express = require('express');
-const cors = require('cors');
 
 const app = express();
+const applyMiddlewares = require('./middleware/app');
+const pathErrorHanlder = require('./middleware/pathErrorHandler')
+const globalErrorHandler = require('./middleware/globalErrorHandler')
+applyMiddlewares(app);
 
-
-app.use(cookieParser());
-app.use(cors());
-
+//Define a helth chek endpoint to check server status.
 app.get('/helth', (req, res) => {
-    res.send('success');
+    res.json('The server is currently operational.');
 })
+
+// Set up path-specific error handling middleware
+app.use(pathErrorHanlder);
+
+// Set up global error handling middleware
+app.use(globalErrorHandler);
 
 module.exports = app;
