@@ -10,8 +10,8 @@ const solutionSchema = new mongoose.Schema({
         default: []
     },
     status: {
-        type: Boolean,
-        default: false
+        type: String,
+        default: "pending"
     },
     submissionDate: {
         type: Date,
