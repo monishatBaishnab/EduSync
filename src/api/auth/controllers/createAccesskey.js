@@ -6,7 +6,7 @@ const createAccessKey = async (req, res, next) => {
         const info = req.body;
         const accessKey = generateKey(info);
         try {
-            res.cookie('access-key', accessKey, {
+            res.cookie('accessKey', accessKey, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
