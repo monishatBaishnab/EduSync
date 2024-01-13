@@ -5,7 +5,28 @@ const Solution = require('../../models/solution');
 router.get('/solutions', validateIdentity, async (req, res, next) => {
     try {
         const assignmentId = req.query.id;
-        const result = await Solution.find({ assignment: assignmentId });
+        const offset = req.query.offset;
+        const filterObj = {};
+        if(assignmentId){
+            filterObj.assignment = assignmentId;
+        }
+
+        const result = await Solution.find(filterObj).limit(offset).populate('solver');
+        res.json(result);
+    } catch (error) {
+        next(error);
+    }
+})
+
+router.get('/solutions/:id', validateIdentity, async (req, res, next) => {
+    try {
+        const id = req.params.id;
+        const filterObj = {}
+        if(id){
+            filterObj._id = id;
+        }
+
+        const result = await Solution.find(filterObj).populate('solver');
         res.json(result);
     } catch (error) {
         next(error);

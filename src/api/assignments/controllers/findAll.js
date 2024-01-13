@@ -2,7 +2,7 @@ const Assignment = require('../../../models/assignment');
 const findAll = async (req, res, next) => {
     try {
         // Extract query parameters for sorting, pagination, and filtering
-        const sequence = parseInt(req.query.sort);
+        const sequence = parseInt(req.query.sequence);
         const page = parseInt(req.query.page);
         const offset = parseInt(req.query.offset);
         const level = req.query.level;
@@ -57,7 +57,7 @@ const findAll = async (req, res, next) => {
 
         // Respond with the paginated assignments and count
         const result = await Assignment.aggregate(pipeline);
-        res.json({ result, count });
+        res.json({ result, count: count[0]?.count });
     } catch (error) {
         next(error);
     }
